@@ -1,4 +1,7 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 raw data
+*.csv
+*.svg
+*.png

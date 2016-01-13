@@ -12,6 +12,7 @@
 # to dtime e.g., 35 -> 0035; 105 -> 0105
 library(dplyr)
 library(tidyr)
+library(reshape2)
 library(readr)
 library(ggplot2)
 library(lubridate)
@@ -65,8 +66,10 @@ lm.coef <- coef(lm(formula = SLP~STP,data = t.pr))
 ## third, remove significant outliers
 t.pr.clean <- t.pr%>%
     filter(SLP < lm.coef[2]*STP+lm.coef[1]*3)
-slp.vs.stp.clean <- ggplot(data = t.pr.clean,mapping = aes(STP,SLP))+
-    geom_point()+stat_smooth(method = 'lm',formula=y~x,size=1)
+t.pr.outlier <- t.pr%>%
+    filter(SLP > lm.coef[2]*STP+lm.coef[1]*3)
+p.slp.vs.stp <- ggplot(data = t.pr.clean,mapping = aes(STP,SLP))+
+    geom_point()+stat_smooth(method = 'lm',formula=y~x,size=1)+geom_point(mapping = aes(color='red'),data=t.pr.outlier)+xlab("station-level pressure (milibar)")+ylab("sea-level pressure(milibar)")+scale_fill_discrete(name="",labels="outlier")
 
 # aggregate hourly data to daily data
 ## first, add a column 'day' as a grouping factor
@@ -101,7 +104,8 @@ t.pr.daily <- t.pr.clean%>%
     arrange(date)
 
 # import synthetic-filled tide hourly data (from victoria)
-t.td <- read.csv('tide.csv',as.is = T)
+## high frequency
+t.td <- read.csv('raw data\\tide.csv',as.is = T)
 t.td.clean <- t.td %>%
     select(datetime=`Date.Time..EST.`,lvl=`Water.Level..ft.from.NAVD88.`)%>%
     mutate(datetime=lubridate::mdy_hm(datetime),lvl=as.numeric(lvl))
@@ -110,14 +114,100 @@ t.td.daily <- t.td.clean%>%
     group_by(date)%>%
     summarise(lvl=mean(lvl,na.rm=T))%>%
     mutate(date=as.POSIXct(date))
+## low frequency
+t.td.lf <- read.csv('raw data\\Fill_LP_old.csv', as.is = T)
+t.td.lf.clean <- t.td.lf %>%
+    select(5:6)%>%
+    rename(datetime=Datetime,lvl=LP_SyntheticData)%>%
+    mutate(datetime=lubridate::mdy_hm(datetime),
+           lvl=as.numeric(lvl))%>%
+    arrange(datetime)
+t.td.lf.daily <- t.td.lf.clean%>%
+    mutate(date=cut(datetime,breaks="1 day"))%>%
+    group_by(date)%>%
+    summarize(lvl=mean(lvl,na.rm=T))%>%
+    mutate(date=as.POSIXct(date))
 
+# save the cleaned wind, pressure, tide data (hourly/daily)
+#save.image("~/Rprojects/Wind_Pressure/PIA_wd_pr_td_clean_hourly_daily.RData")
+
+# plotting results:
+## wind:
+library(openair)
+#make the wind rose plot and polar frequency plot(spd unit is converted to m/s by *0.47)
+t.wd.hr <- t.wd.clean%>%
+    transmute(datetime=datetime,wd=DIR,ws=SPD*0.447)
+png(filename = "wind rose_hourly.png")
+plot(windRose(t.wd.hr))
+dev.off()
+png(filename = "wind polar_hourly.png")
+plot(polarFreq(t.wd.hr))
+dev.off()
+
+t.wd.dy.rose <- t.wd.daily%>%
+    transmute(datetime=date,wd=DIR,ws=SPD*0.447)
+png(filename = "wind rose_daily.png")
+plot(windRose(t.wd.dy.rose))
+dev.off()
+png(filename = "wind polar_daily.png")
+plot(polarFreq(t.wd.dy.rose))
+dev.off()
+
+#plot wind speed pdf by wedges
+## hourly
+t.wd.mean.spd <- t.wd.clean%>%
+    group_by(wedge)%>%
+    summarize(m.spd=mean(SPD,na.rm=T))
+p.wd.pdf <- ggplot(data=t.wd.daily,
+                         mapping=aes(x = SPD,fill=wedge,color=wedge))+
+    geom_freqpoly()+
+    geom_vline(data=t.wd.mean.spd,
+               mapping = aes(xintercept=m.spd,color=wedge),
+               linetype='dashed',size=1)+
+    annotation_custom(grob=gridExtra::tableGrob(t.wd.mean.spd),xmin=25,xmax=35,ymin=100,ymax=1200)
+ggsave("wind speed distribution by wedge.png")
+
+## sea level vs. station level pressure
+ggsave("SLP vs STP.png",p.slp.vs.stp)
+
+## pressure pdf
+t.pr.melt <- melt(data = t.pr.clean,id.vars = "datetime",variable.name = "type",value.name = "milibar")
+p.pr.pdf <- ggplot(data=t.pr.melt,mapping = aes(x=milibar,color=type))+geom_freqpoly()
+ggsave("pressure distribution.png")
+
+##tide high frequency vs. low frequency
+t.td.lf.hf <- inner_join(t.td.clean,t.td.lf.clean)
+t.td.lf.hf.melt <- melt(t.td.lf.hf,id.vars = "datetime",variable.name = "type",value.name = "ft")
+p.td.lf.hf.scatter <- ggplot(t.td.lf.hf.melt,aes(x=datetime,y=ft, color=type,group=type))+geom_line()+labs(x="date time",y="tide level (ft)")
+ggsave("tide level high vs. low frequency.png")
+
+#wind vs. tide:
 wd.vs.td.clean <- inner_join(t.wd.clean,t.td.clean)
+p.wd.td.hr.scatter <- ggplot(data = wd.vs.td.clean,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. tide by wedge-hourly.png")
+
 wd.vs.td.daily <- inner_join(t.wd.daily,t.td.daily)
+p.wd.td.dy.scatter <- ggplot(data = wd.vs.td.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. tide by wedge-daily.png")
+
+wd.vs.td.lf.clean <- inner_join(t.wd.clean,t.td.lf.clean)
+p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.clean,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. tide_low_freq by wedge-hourly.png")
+
+wd.vs.td.lf.daily <- inner_join(t.wd.clean,t.td.lf.daily)
+p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. tide_low_freq by wedge-daily.png")
+
+
+
+
+
 pr.vs.td.clean <- inner_join(t.pr.clean,t.td.clean)
 pr.vs.td.daily <- inner_join(t.pr.daily,t.td.daily)
 
-wd.td.hourly.plot <-
-    ggplot(data = wd.vs.td.daily,mapping = aes(SPD , lvl))+geom_point(mapping = aes(color=wedge))+geom_smooth()
+
+
+
 
 lattice::xyplot(SPD ~ lvl | wedge, data=wd.vs.td.daily,
        grid=T,
