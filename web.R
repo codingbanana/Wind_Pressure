@@ -194,39 +194,51 @@ wd.vs.td.lf.clean <- inner_join(t.wd.clean,t.td.lf.clean)
 p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.clean,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
 ggsave("wind speed vs. tide_low_freq by wedge-hourly.png")
 
-wd.vs.td.lf.daily <- inner_join(t.wd.clean,t.td.lf.daily)
-p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
+wd.vs.td.lf.daily <- inner_join(t.wd.daily,t.td.lf.daily)
+p.wd.td.lf.dy.scatter <- ggplot(data = wd.vs.td.lf.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge)+geom_point(mapping = aes(color=wedge))+geom_smooth()
 ggsave("wind speed vs. tide_low_freq by wedge-daily.png")
 
-
-
-
-
 pr.vs.td.clean <- inner_join(t.pr.clean,t.td.clean)
+p.pr.td.hr.scatter <- ggplot(data = pr.vs.td.clean,aes(x=SLP,y=lvl))+
+    geom_point()+geom_smooth()
+ggsave(" Sea-level Pressure vs. tide-hourly.png")
+
+pr.vs.td.lf.clean <- inner_join(t.pr.clean,t.td.lf.clean)
+p.pr.td.lf.hr.scatter <- ggplot(data = pr.vs.td.lf.clean,aes(x=SLP,y=lvl))+geom_point()+geom_smooth()
+ggsave(" Sea-level Pressure vs. tide_low_freq-hourly.png")
+
 pr.vs.td.daily <- inner_join(t.pr.daily,t.td.daily)
+p.pr.td.dy.scatter <- ggplot(data = pr.vs.td.daily,aes(x=SLP,y=lvl))+
+    geom_point()+geom_smooth()
+ggsave(" Sea-level Pressure vs. tide-daily.png")
 
+pr.vs.td.lf.daily <- inner_join(t.pr.daily,t.td.lf.daily)
+p.pr.td.lf.dy.scatter <- ggplot(data = pr.vs.td.lf.daily,aes(x=SLP,y=lvl))+geom_point()+geom_smooth()
+ggsave(" Sea-level Pressure vs. tide_low_freq-daily.png")
 
+wd.vs.pr.hourly <- inner_join(t.wd.clean,t.pr.clean)
+p.wd.pr.hr.scatter <- ggplot(data=wd.vs.pr.hourly,aes(x=SPD,y=SLP))+facet_wrap(~wedge)+geom_point(aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. sea-level pressure-hourly.png")
 
+wd.vs.pr.daily <- inner_join(t.wd.daily,t.pr.daily)
+p.wd.pr.dy.scatter <- ggplot(data=wd.vs.pr.daily,aes(x=SPD,y=SLP))+facet_wrap(~wedge)+geom_point(aes(color=wedge))+geom_smooth()
+ggsave("wind speed vs. sea-level pressure-daily.png")
 
+# lattice::xyplot(SPD ~ lvl | wedge, data=wd.vs.td.daily,
+#        grid=T,
+#        type = c("p", "smooth"),
+#        col.line = "darkorange",
+#        # group = wedge,
+#        auto.key = list(columns=nlevels(wd.vs.td.daily$wedge)),
+#        lwd = 3)
+#
+# pres_tide <- qplot(sea_pressure, tide, data= wind_tide_all,geom= c("point", "smooth"))
+# qplot(wind_spd, data=wind_tide_all, group=wedge, color=wedge, binwidth=0.1, geom = c('freqpoly'))
 
-lattice::xyplot(SPD ~ lvl | wedge, data=wd.vs.td.daily,
-       grid=T,
-       type = c("p", "smooth"),
-       col.line = "darkorange",
-       # group = wedge,
-       auto.key = list(columns=nlevels(wd.vs.td.daily$wedge)),
-       lwd = 3)
-
-pres_tide <- qplot(sea_pressure, tide, data= wind_tide_all,geom= c("point", "smooth"))
-qplot(wind_spd, data=wind_tide_all, group=wedge, color=wedge, binwidth=0.1, geom = c('freqpoly'))
-ggsave("prs_td.svg",plot=pres_tide)
-
-p <- ggplot(wind_tide_all,aes(wind_spd,tide))+
-    facet_wrap(~wedge,nrow=4)+
-    geom_point(aes(color=wedge))+
-    geom_smooth(method='lm')+
-    coord_cartesian()
-p+theme_grey()
-p+theme_minimal()
-p+theme_void()
-autoplot(wind_tide_all)
+# ggsave("prs_td.svg",plot=pres_tide)
+#
+# p <- ggplot(wind_tide_all,aes(wind_spd,tide))+
+#     facet_wrap(~wedge,nrow=4)+
+#     geom_point(aes(color=wedge))+
+#     geom_smooth(method='lm')+
+#     coord_cartesian()
