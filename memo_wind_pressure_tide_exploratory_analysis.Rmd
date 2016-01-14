@@ -1,0 +1,16 @@
+---
+title: "Memo_wind_pressure_tide"
+author: "HZ"
+date: "January 14, 2016"
+output: html_document
+---
+**This memo serves as a side note for the 'wind/pressure vs. tide exploratory analysis'** 
+
+### wind stats  
+
+```{r, echo=FALSE}
+plot()
+```
+Fig.1 
+
+
