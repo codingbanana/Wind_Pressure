@@ -1,56 +1,94 @@
 # plotting results:
 library(ggplot2)
 library(reshape2)
+library(dplyr)
 
 if ("PIA_all.RData" %in% list.files()){
-    if (length(ls())==0) load("PIA_all.RData")
+    load("PIA_all.RData")
 } else {
     source("web.R")
+}
+fl_name_gen <- function(x){
+    tmp <- gsub("\\.","_",x)
+    tmp <- gsub("wd","wind",tmp)
+    tmp <- gsub("td","tide",tmp)
+    tmp <- gsub("pr","pressure",tmp)
+    tmp <- gsub("SLP","sea-level pressure",tmp)
+    tmp <- gsub("STP","station pressure",tmp)
+    tmp <- gsub("lf","low_freq",tmp)
+    tmp <- gsub("^[t|p]_","",tmp)
+    tmp <- gsub("(clean)|(hr)","hourly",tmp)
+    tmp <- gsub("dy","daily",tmp)
+    tmp <- gsub("dist","distribution",tmp)
+    paste0(tmp,".png")
+}
+
+png_plot <- function(x){
+    fl.name=fl_name_gen(deparse(substitute(x)))
+    png(filename = fl.name,width = 12,height = 8,units="in",res=140)
+    plot.new()
+    plot(x)
+    par(oma=c(0,0,2,0),cex.main=1)
+    title(main=fl.name,outer = T,font.main=4,col.main="blue")
+    dev.off()
 }
 
 ## wind:
 library(openair)
 ## make the wind rose plot and polar frequency plot
 ## (spd unit is converted to m/s by *0.447)
-t.wd.hr <- t.wd.clean%>%
+t.wd.hr.rose <- t.wd.clean%>%
     transmute(datetime=datetime,wd=DIR,ws=SPD*0.447)
-png(filename = "wind rose_hourly.png",width = 7,height = 7,units = "inch")
-plot(windRose(t.wd.hr))
-dev.off()
-png(filename = "wind polar_hourly.png",width = 7,height = 7,units = "inch")
-plot(polarFreq(t.wd.hr))
-dev.off()
+p.wd.hr.rose <- windRose(t.wd.hr.rose)
+png_plot(p.wd.hr.rose)
+
+p.wd.hr.polar <-polarFreq(t.wd.hr.rose)
+png_plot(p.wd.hr.polar)
 
 t.wd.dy.rose <- t.wd.daily%>%
     transmute(datetime=date,wd=DIR,ws=SPD*0.447)
-png(filename = "wind rose_daily.png",width = 7,height = 7,units = "inch")
-plot(windRose(t.wd.dy.rose))
-dev.off()
-png(filename = "wind polar_daily.png",width = 7,height = 7,units = "inch")
-plot(polarFreq(t.wd.dy.rose))
-dev.off()
+p.wd.dy.rose <- windRose(t.wd.dy.rose)
+png_plot(p.wd.dy.rose)
 
-#plot wind speed pdf by wedges
+p.wd.dy.polar <-polarFreq(t.wd.dy.rose)
+png_plot(p.wd.dy.polar)
+
+# wind speed pdf by wedges
 ## hourly
 t.wd.mean.spd <- t.wd.clean%>%
     group_by(wedge)%>%
     summarize(m.spd=mean(SPD,na.rm=T))
-p.wd.pdf <- ggplot(data=t.wd.daily,
-                   mapping=aes(x = SPD,fill=wedge,color=wedge))+
-    geom_freqpoly()+
-    geom_vline(data=t.wd.mean.spd,
-               mapping = aes(xintercept=m.spd,color=wedge),
-               linetype='dashed',size=1)+
-    annotation_custom(grob=gridExtra::tableGrob(t.wd.mean.spd),xmin=25,xmax=35,ymin=100,ymax=1200)
-ggsave("wind speed distribution by wedge.png")
+p.wd.dist.by.wedge <- ggplot(data=t.wd.clean,
+                   mapping=aes(x = SPD,color=wedge))+
+    geom_freqpoly(binwidth=4)+
+# the mean line is removed to aviod confusion (the dist is not normal)
+#     geom_vline(data=t.wd.mean.spd,
+#                mapping = aes(xintercept=m.spd,color=wedge),
+#                linetype='dashed',size=1)+
+    coord_cartesian(xlim=c(0,60))+
+    annotation_custom(grob=gridExtra::tableGrob(t.wd.mean.spd),xmin=40,xmax=60,ymin=10000,ymax=40000)
+#ggsave("wind speed distribution by wedge.png")
+## daily
+t.wd.dy.mean.spd <- t.wd.daily%>%
+    group_by(wedge)%>%
+    summarize(m.spd=mean(SPD,na.rm=T))
+p.wd.dist.by.wedge.dy <- ggplot(data=t.wd.daily,
+                             mapping=aes(x = SPD,color=wedge))+
+    geom_freqpoly(binwidth=1)+
+#     geom_vline(data=t.wd.mean.spd,
+#                mapping = aes(xintercept=m.spd,color=wedge),
+#                linetype='dashed',size=1)+
+    annotation_custom(grob=gridExtra::tableGrob(t.wd.dy.mean.spd),xmin=25,xmax=35,ymin=100,ymax=1200)
+png_plot(p.wd.dist.by.wedge.dy)
+#ggsave("wind speed distribution by wedge.png")
 
 ## sea level vs. station level pressure
 p.slp.vs.stp <- ggplot(data = t.pr.clean,mapping = aes(STP,SLP))+
-    geom_point()+stat_smooth(method = 'lm',formula=y~x,size=1)+
-    geom_point(mapping = aes(color='red'),data=t.pr.outlier)+
+    geom_point(aes(alpha=0.5),show.legend = F)+stat_smooth(method = 'lm',formula=y~x,size=1)+
+    geom_point(mapping = aes(color='red'),data=t.pr.outlier,show.legend = F)+
     xlab("station-level pressure (milibar)")+ylab("sea-level pressure(milibar)")+
     scale_fill_discrete(name="",labels="outlier")
-ggsave("SLP vs STP.png")
+#ggsave("SLP vs STP.png")
 
 ## pressure pdf
 t.pr.melt <- melt(data = t.pr.clean,id.vars = "datetime",variable.name = "type",value.name = "milibar")
