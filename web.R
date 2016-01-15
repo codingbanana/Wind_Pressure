@@ -52,6 +52,7 @@ t.wd <- t%>%
 # pressure data: datetime, SLP, SPD
 t.pr <- t%>%
     select(datetime,SLP,STP)%>%
+    #NAs introduced by coercion, not important
     mutate(SLP=as.numeric(SLP),STP=as.numeric(STP))%>%
     filter(!((is.na(SLP))&(is.na(STP))))%>%
     arrange(datetime)
@@ -120,23 +121,23 @@ t.td.daily <- t.td.clean%>%
 t.td.lf <- read.csv('raw data\\Fill_LP_old.csv', as.is = T)
 t.td.lf.clean <- t.td.lf %>%
     select(5:6)%>%
-    rename(datetime=Datetime,lvl=LP_SyntheticData)%>%
+    rename(datetime=Datetime,lvl_lf=LP_SyntheticData)%>%
     mutate(datetime=lubridate::mdy_hm(datetime),
-           lvl=as.numeric(lvl))%>%
+           lvl_lf=as.numeric(lvl_lf))%>%
     arrange(datetime)
 t.td.lf.daily <- t.td.lf.clean%>%
     mutate(date=cut(datetime,breaks="1 day"))%>%
     group_by(date)%>%
-    summarize(lvl=mean(lvl,na.rm=T))%>%
+    summarize(lvl_lf=mean(lvl_lf,na.rm=T))%>%
     mutate(date=as.POSIXct(date))
+
 ## calculate the tide difference as compared to the day before
 t.td.diff.daily <- t.td.daily%>%
     transmute(date=date,lvl_diff=lvl-lag(lvl))%>%
     filter(!is.na(lvl_diff))
 t.td.lf.diff.daily <- t.td.lf.daily%>%
-    transmute(date=date,lvl_diff=lvl-lag(lvl))%>%
-    filter(!is.na(lvl_diff))
-# save the cleaned, hourly/daily, wind, pressure, tide data(low/high frequency)
-rm(list=grep("(^t\\.)",ls(),value=T,invert=T))
-save.image("~/Rprojects/Wind_Pressure/PIA_all.RData")
+    transmute(date=date,lvl_lf_diff=lvl_lf-lag(lvl_lf))%>%
+    filter(!is.na(lvl_lf_diff))
 
+# save the cleaned, hourly/daily, wind, pressure, tide data(low/high frequency)
+save(list=grep("(^t\\.)",ls(),value=T),file="PIA_data.RData")

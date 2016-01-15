@@ -9,7 +9,16 @@ output: html_document
 ### wind stats  
 
 ```{r, echo=FALSE}
-plot()
+if ("PIA_plots.RData" %in% list.files()){
+    load("PIA_plots.RData")
+} else {
+    source("plots.R")
+}
+par(mfrow=c(2,2))
+plot(p.wd.hr.rose)
+plot(p.wd.hr.polar)
+plot(p.wd.dy.rose)
+plot(p.wd.dy.polar)
 ```
 Fig.1 
 
