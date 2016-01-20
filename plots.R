@@ -31,8 +31,9 @@ t.wd.mean.spd <- t.wd.clean%>%
 p.wd.dist.by.wedge <- ggplot(data=t.wd.clean,
                    mapping=aes(x = SPD,color=wedge))+
     geom_freqpoly(binwidth=4)+
-    coord_cartesian(xlim=c(0,60))+
-    annotation_custom(grob=gridExtra::tableGrob(t.wd.mean.spd),xmin=40,xmax=60,ymin=10000,ymax=40000)
+    coord_cartesian(xlim=c(0,50))+
+    labs(x="wind speed (MPH)",y="count")+
+    annotation_custom(grob=gridExtra::tableGrob(t.wd.mean.spd),xmin=30,xmax=50,ymin=10000,ymax=40000)
 ## daily
 t.wd.dy.mean.spd <- t.wd.daily%>%
     group_by(wedge)%>%
@@ -40,22 +41,25 @@ t.wd.dy.mean.spd <- t.wd.daily%>%
 p.wd.dist.by.wedge.dy <- ggplot(data=t.wd.daily,
                              mapping=aes(x = SPD,color=wedge))+
     geom_freqpoly(binwidth=1)+
-    annotation_custom(grob=gridExtra::tableGrob(t.wd.dy.mean.spd),xmin=25,xmax=35,ymin=100,ymax=1200)
+    coord_cartesian(xlim=c(0,50))+
+    labs(x="wind speed (MPH)",y="count")+
+    annotation_custom(grob=gridExtra::tableGrob(t.wd.dy.mean.spd),xmin=30,xmax=50,ymin=100,ymax=1200)
 
 ## sea level vs. station level pressure
 p.slp.vs.stp <- ggplot(data = t.pr.clean,mapping = aes(STP,SLP))+
     geom_point(aes(alpha=0.5),show.legend = F)+stat_smooth(method = 'lm',formula=y~x,size=1)+
     geom_point(mapping = aes(color='red'),data=t.pr.outlier,show.legend = F)+
-    xlab("station-level pressure (milibar)")+ylab("sea-level pressure(milibar)")+
-    scale_fill_discrete(name="",labels="outlier")
+    labs(x="station-level pressure (milibar)",y="sea-level pressure(milibar)")
 
 # pressure pdf
 ## hourly
 t.pr.hr.melt <- melt(data = t.pr.clean,id.vars = "datetime",variable.name = "type",value.name = "milibar")
-p.pr.dist.hr <- ggplot(data=t.pr.hr.melt,mapping = aes(x=milibar,color=type))+geom_freqpoly(binwidth=4)
+p.pr.dist.hr <- ggplot(data=t.pr.hr.melt,mapping = aes(x=milibar,color=type))+geom_freqpoly(binwidth=4)+
+    labs(x="atmospheric pressure (milibar)",y="count")
 ## daily
 t.pr.dy.melt <- melt(data = t.pr.daily,id.vars = "date",variable.name = "type",value.name = "milibar")
-p.pr.dist.dy <- ggplot(data=t.pr.dy.melt,mapping = aes(x=milibar,color=type))+geom_freqpoly(binwidth=4)
+p.pr.dist.dy <- ggplot(data=t.pr.dy.melt,mapping = aes(x=milibar,color=type))+geom_freqpoly(binwidth=4)+
+    labs(x="atmospheric pressure (milibar)",y="count")
 
 # tide high frequency vs. low frequency
 ## hourly
@@ -74,49 +78,49 @@ p.td.diff.dy.line <- ggplot(t.td.diff.dy.melt,aes(x=date,y=ft, color=type,group=
 
 # wind vs. tide:
 wd.vs.td.clean <- inner_join(t.wd.clean,t.td.clean)
-p.wd.td.hr.scatter <- ggplot(data = wd.vs.td.clean,aes(x=SPD,y=lvl))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.td.hr.scatter <- ggplot(data = wd.vs.td.clean,aes(x=SPD,y=lvl))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide level (ft)")
 
 wd.vs.td.daily <- inner_join(t.wd.daily,t.td.daily)
-p.wd.td.dy.scatter <- ggplot(data = wd.vs.td.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.td.dy.scatter <- ggplot(data = wd.vs.td.daily,aes(x=SPD,y=lvl))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide level (ft)")
 ## low frequency:
 wd.vs.td.lf.clean <- inner_join(t.wd.clean,t.td.lf.clean)
-p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.clean,aes(x=SPD,y=lvl_lf))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.td.lf.hr.scatter <- ggplot(data = wd.vs.td.lf.clean,aes(x=SPD,y=lvl_lf))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide level-low frequency (ft)")
 
 wd.vs.td.lf.daily <- inner_join(t.wd.daily,t.td.lf.daily)
-p.wd.td.lf.dy.scatter <- ggplot(data = wd.vs.td.lf.daily,aes(x=SPD,y=lvl_lf))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.td.lf.dy.scatter <- ggplot(data = wd.vs.td.lf.daily,aes(x=SPD,y=lvl_lf))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide level-low frequency (ft)")
 # pressure vs. tide:
 pr.vs.td.clean <- inner_join(t.pr.clean,t.td.clean)
 p.pr.td.hr.scatter <- ggplot(data = pr.vs.td.clean,aes(x=SLP,y=lvl))+
-    geom_point(alpha=0.1)+geom_smooth()
+    geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide level (ft)")
 
 pr.vs.td.lf.clean <- inner_join(t.pr.clean,t.td.lf.clean)
-p.pr.td.lf.hr.scatter <- ggplot(data = pr.vs.td.lf.clean,aes(x=SLP,y=lvl_lf))+geom_point(alpha=0.1)+geom_smooth()
+p.pr.td.lf.hr.scatter <- ggplot(data = pr.vs.td.lf.clean,aes(x=SLP,y=lvl_lf))+geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide level-low frequency (ft)")
 
 pr.vs.td.daily <- inner_join(t.pr.daily,t.td.daily)
 p.pr.td.dy.scatter <- ggplot(data = pr.vs.td.daily,aes(x=SLP,y=lvl))+
-    geom_point(alpha=0.1)+geom_smooth()
+    geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide level (ft)")
 
 pr.vs.td.lf.daily <- inner_join(t.pr.daily,t.td.lf.daily)
-p.pr.td.lf.dy.scatter <- ggplot(data = pr.vs.td.lf.daily,aes(x=SLP,y=lvl_lf))+geom_point(alpha=0.1)+geom_smooth()
+p.pr.td.lf.dy.scatter <- ggplot(data = pr.vs.td.lf.daily,aes(x=SLP,y=lvl_lf))+geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide level-low frequency (ft)")
 
 #wind vs. pressure:
 wd.vs.pr.hourly <- inner_join(t.wd.clean,t.pr.clean)
-p.wd.pr.hr.scatter <- ggplot(data=wd.vs.pr.hourly,aes(x=SPD,y=SLP))+facet_wrap(~wedge,ncol=4)+geom_point(aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.pr.hr.scatter <- ggplot(data=wd.vs.pr.hourly,aes(x=SPD,y=SLP))+facet_wrap(~wedge,ncol=4)+geom_point(aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(y="sea-level pressure(milibar)",x="wind speed(MPH)")
 
 wd.vs.pr.daily <- inner_join(t.wd.daily,t.pr.daily)
-p.wd.pr.dy.scatter <- ggplot(data=wd.vs.pr.daily,aes(x=SPD,y=SLP))+facet_wrap(~wedge,ncol=4)+geom_point(aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.pr.dy.scatter <- ggplot(data=wd.vs.pr.daily,aes(x=SPD,y=SLP))+facet_wrap(~wedge,ncol=4)+geom_point(aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(y="sea-level pressure(milibar)",x="wind speed(MPH)")
 
 #wind vs. tide diff-daily:
 wd.vs.td.diff.daily <- inner_join(t.wd.daily,t.td.diff.daily)
-p.wd.td.diff.dy.scatter <- ggplot(data = wd.vs.td.diff.daily,aes(x=SPD,y=lvl_diff))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
+p.wd.td.diff.dy.scatter <- ggplot(data = wd.vs.td.diff.daily,aes(x=SPD,y=lvl_diff))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide difference (ft)")
 
 wd.vs.td.lf.diff.daily <- inner_join(t.wd.daily,t.td.lf.diff.daily)
-p.wd.td.lf.diff.dy.scatter <- ggplot(data = wd.vs.td.lf.diff.daily,aes(x=SPD,y=lvl_lf_diff))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()
-
+p.wd.td.lf.diff.dy.scatter <- ggplot(data = wd.vs.td.lf.diff.daily,aes(x=SPD,y=lvl_lf_diff))+ facet_wrap(~wedge,ncol=4)+geom_point(mapping = aes(color=wedge),alpha=0.1)+geom_smooth()+theme(legend.position="none")+labs(x="wind speed(MPH)",y="tide difference-low frequency (ft)")
+#pressure vs. tide diff-daily:
 pr.vs.td.diff.daily <- inner_join(t.pr.daily,t.td.diff.daily)
-p.pr.td.diff.dy.scatter <- ggplot(data = pr.vs.td.diff.daily,aes(x=SLP,y=lvl_diff))+geom_point(alpha=0.1)+geom_smooth()
+p.pr.td.diff.dy.scatter <- ggplot(data = pr.vs.td.diff.daily,aes(x=SLP,y=lvl_diff))+geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide difference (ft)")
 
 pr.vs.td.lf.diff.daily <- inner_join(t.pr.daily,t.td.lf.diff.daily)
-p.pr.td.lf.diff.dy.scatter <- ggplot(data = pr.vs.td.lf.diff.daily,aes(x=SLP,y=lvl_lf_diff))+geom_point(alpha=0.1)+geom_smooth()
+p.pr.td.lf.diff.dy.scatter <- ggplot(data = pr.vs.td.lf.diff.daily,aes(x=SLP,y=lvl_lf_diff))+geom_point(alpha=0.1)+geom_smooth()+labs(x="sea-level pressure(milibar)",y="tide difference-low freqency(ft)")
 
 save(list=grep("(^p\\.)",ls(),value=T),file="PIA_plots.RData")
