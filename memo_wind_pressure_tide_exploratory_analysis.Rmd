@@ -2,14 +2,14 @@
 title: "Wind/Pressure vs. Tide exploratory anaysis"
 author: '[Hao Zhang](hao.zhang@phila.gov)'
 date: "January 14, 2016"
-output: word_document
+output: html_document
 ---
 
 **This memo serves as a side note for the 'wind/pressure vs. tide exploratory analysis'** 
 
 ### wind stats  
 Wind data are downloaded from the NOAA NCEI ISH database. The monitoring station is located at the Philadelphia International Airport. Raw data contains wind direction and speed for every hour from 1940 to 2015 (present). Any flagged data,e.g., varied wind direction (noted as 990), are excluded from further analysis. Raw data are then aggregated into daily means.
-The wind direction (degrees, 0~360) is grouped into 8 'wedges', and the frequency distribution of the wind speed is then plotted for each subset.  Wind speed (mi/hr) is converted to m/s for making the wind rose plot and wind polar plot, which reflect the predominant wind direction and speed across the monitoring period. both daily and hourly data are plotted in order to evaluate the influence of the aggregation to the data distribution.
+The wind direction (degrees, 0~360) is grouped into 8 'wedges', and the frequency distribution of the wind speed is then plotted for each subset.  Wind speed (MPH) is converted to m/s for making the wind rose plot and wind polar plot, which reflect the predominant wind direction and speed across the monitoring period. both daily and hourly data are plotted in order to evaluate the influence of the aggregation to the data distribution.
 As shown, wind from the SW directions with a speed of approx. 10mi/hr tends to be prevalent during the monitoring period, even though the max speed happened at NW direction. The daily data shows a more significant pattern of the dominant wind speed and direction, which is consistent with the hourly data. Daily wind rose plot shows a lack of data in the NE section, which indicates the aggregation may be an issue if the raw data are too few. 
 
 ```{r,echo=FALSE,include=FALSE}
@@ -30,9 +30,11 @@ plot(p.wd.dy.polar)
 plot(p.wd.dist.by.wedge)
 plot(p.wd.dist.by.wedge.dy)
 ```
+*(wind direction is reported by the direction from which it originates.Ref:[wiki](https://en.wikipedia.org/wiki/Wind_direction))*
 
 ### Pressure stats
-Pressure data are also downloaded from the NOAA NCEI ISH database at the PIA station. Raw data contains the station pressure(STP) and sea-level pressure(SLP) for every hour from 1940-2015 (present). Any flagged data, e.g., observation errors, are removed from the dataset. Raw data are then aggregated into daily means. Since SLP is converted from STP by ajusting the altitude (monitored by an altimeter at the same frequency), SLP and STP should be positively correlated. As shown, the cross-fitted plot has validated the hypothsis, while a few outliers that obviously don't fall on the linear relationship are marked in red and are excluded from further analyses. The distribution for both hourly and daily pressure data are plotted.
+Pressure data are also downloaded from the NOAA NCEI ISH database at the PIA station. Raw data contains the station pressure(STP) and sea-level pressure(SLP) for every hour from 1940-2015 (present). Any flagged data, e.g., observation errors, are removed from the dataset. Raw data are then aggregated into daily means. 
+Since SLP is converted from STP by ajusting the altitude (monitored by an altimeter at the same frequency), SLP and STP should be positively correlated. As shown, the cross-fitted plot has validated the hypothsis, while a few outliers that obviously don't fall on the linear relationship are marked in red and are excluded from further analyses. The distribution for both hourly and daily pressure data are plotted.
 ```{r,echo=F,out.width="600px",out.height="450px",fig.align='center'}
 plot(p.slp.vs.stp)
 ```
@@ -43,7 +45,7 @@ plot(p.pr.dist.dy)
 
 ### Tide stats
 Tide data are downloaded from the NOAA tide API at the Phildelphia International Airport station. Raw data contains hourly tide evelvations (NAVD88) from 1901 to 2015 (present), with gaps in certain periods. Raw data are pre-processed by a 'synthetic-fill' method, where missing data are interpolated by the neaby stations data. In order to minimize the noise caused by the tidal effect, The averaged dinual pattern were further removed from the time-series data to create a 'low frequency' dataset.The hourly data are plot on the top, which are then aggregated into daily means. The daily data is shown in the middle plot, as seen, the high frequency and low frequency data are overlapping on each other. Moreover, the daily difference (ft), which is the difference between the day and the day **before** the time stamp, are also plotted on the bottom.
-```{r,echo=F,fig.width=10,fig.height=2}
+```{r,echo=F,fig.width=10,fig.height=2.5}
 plot(p.td.hr.line)
 plot(p.td.dy.line)
 plot(p.td.diff.dy.line)
@@ -60,7 +62,7 @@ plot(p.wd.td.lf.diff.dy.scatter)
 ```
 
 ### pressure vs. tide
-Similarly, tide data are analyzed across the coresponding pressure data. Results show a weak negatibe correlation between tide level and sea-level atmospheric pressure. There is no significant correlation between level difference and sea-level atmospheric pressure.
+Similarly, tide data are analyzed across the coresponding pressure data. Results show a weak negatibe correlation between tide level and sea-level atmospheric pressure. There is no significant correlation between level difference and sea-level atmospheric pressure, nor does the daily pressure difference.
 
 ```{r,echo=F,out.width="450px",out.height="300px"}
 #plot(p.pr.td.hr.scatter)
@@ -68,10 +70,11 @@ plot(p.pr.td.dy.scatter)
 #plot(p.pr.td.lf.hr.scatter)
 plot(p.pr.td.lf.dy.scatter)
 plot(p.pr.td.lf.diff.dy.scatter)
+plot(p.pr.diff.td.diff.dy.scatter)
 ```
 
 ### wind vs. pressure
-In order to discuss the relationship between wind and pressure, a scatter plot for those two indices were generated. As seen, the wind speed shows a weak negative corelation with the pressure for all directions, which is related to the fact that many storms happened at the low pressure zone, and the closer the station is near the low pressure, the stronger the gust of wind.
+In order to discuss the relationship between wind and pressure, a scatter plot for those two indices was analyzed. As seen, the wind speed shows a weak negative corelation with the pressure for all directions, which is related to the fact that many storms happened at the low pressure zone, and the closer to the low pressure zone, the stronger the gust of wind.
 ```{r,echo=F,out.width="1000px",out.height="400px"}
 #plot(p.wd.pr.hr.scatter)
 plot(p.wd.pr.dy.scatter)

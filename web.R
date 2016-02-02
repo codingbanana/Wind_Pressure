@@ -105,7 +105,14 @@ t.pr.daily <- t.pr.clean%>%
     summarize(SLP=mean(SLP,na.rm=T),STP=mean(STP,na.rm=T))%>%
     mutate(date=as.POSIXct(date))%>%
     arrange(date)
-
+t.pr.diff.hr <- t.pr.clean%>%
+    transmute(datetime=datetime, SLP_diff=SLP-lag(SLP), STP_diff=STP-lag(STP))%>%
+    filter(!(is.na(SLP_diff)|is.na(STP_diff)))%>%
+    arrange(datetime)
+t.pr.diff.dy <- t.pr.daily%>%
+    transmute(date=date, SLP_diff=SLP-lag(SLP), STP_diff=STP-lag(STP))%>%
+    filter(!(is.na(SLP_diff)|is.na(STP_diff)))%>%
+    arrange(date)
 # import synthetic-filled tide hourly data (from victoria)
 ## high frequency
 t.td <- read.csv('raw data\\tide.csv',as.is = T)
