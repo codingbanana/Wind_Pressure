@@ -1,0 +1,28 @@
+---
+title: "Wind/Pressure vs. Tide extended analysis"
+author: '[Hao Zhang](hao.zhang@phila.gov)'
+date: "February 3, 2016"
+output: html_document
+---
+**This memo serves as an appendix for the memo 'wind/pressure vs. tide exploratory analysis' that addresses a few requests by VR (2016.1.29)** 
+```{r,echo=FALSE,include=FALSE}
+library(ggplot2)
+if ("PIA_max_diff.RData" %in% list.files()){
+    load("PIA_max_diff.RData")
+} else {
+    source("Max_diff_vs_tide.R")
+}
+```
+### Daily Max Changes in Pressure vs. Tide 
+The correlation between daily maximum atmospheric pressure changes and daily maximum tide level changes is analyzed. It is expected to show more significant trend as the amplitudes (max-min) are used instead of the averaged difference, which is the daily averaged tide level difference between the day and the previous day. As seen, the daily max atmospheric pressure changes did not show a significant correlation to the tide level changes.
+
+```{r, echo=FALSE,fig.width=9}
+p.pr.td.max.diff.scatter
+```
+
+### Daily wind vs. tide difference in 72 wedges
+The correlation between daily wind speed and daily tide level difference are plotted by 72 wedges (5 degree per wedge, the ranges are stated on the each title of  sub-plots). It is expected to show the influent of wind direction on the correlationship between wind speed and tide difference. As seen, there is **positive** correlation between tide level and wind speed on the (-2.5, 227.5] (**east**) direction, while there is a **negative** correlation on the (227.5,357.5] (**west**) direction, which is consistent with the result in the 8 wedges plot. Some sub-plot on the north direction do not have trend lines due to the limited sample numbers.
+
+```{r, echo=FALSE,warning=FALSE, message=FALSE,fig.width=9,fig.height=36}
+p.wd.td.diff.dy.scatter.72wedges
+```
